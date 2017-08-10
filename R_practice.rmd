@@ -1,0 +1,243 @@
+---
+title: "lesson3.rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+To set the working directory
+```{r}
+setwd('~/Documents/udacity-eda-course-materials/lesson3/')
+```
+To view the list of files in the directory
+
+```{r}
+list.files()
+```
+
+To load the data
+```{r}
+pf <- read.csv('pseudo_facebook.tsv', sep = '\t')
+```
+
+To view the column names and the corresponding data types
+```{r}
+str(pf)
+```
+
+To view the list of column names in the data frame
+```{r}
+names(pf)
+```
+
+To view the dimension alias shape of a data frame
+```{r}
+dim(pf)
+```
+
+To view the summary of the data (displays counts for factor/categorical variables; min, mean, max, and quantiles for numerical data)
+
+```{r}
+summary(pf)
+```
+
+To view the count of factor variable
+
+```{r}
+table(pf$gender)
+```
+
+To view the levels of a categorical variable
+```{r}
+levels(pf$gender)
+```
+
+To order the factor variables
+```{r}
+pf$gender <- factor(pf$gender, levels = c('male', 'female'), ordered = T)
+
+# or the below way
+
+pf$gender <- ordered(pf$gender, levels = c('male', 'female'))
+```
+
+To plot the distributions of the variables
+```{r}
+library(ggplot2)
+qplot(data = pf, x = age)
+# or the below way
+qplot(data = pf, x = dob_day) +
+  scale_x_continuous(breaks = 1:31) +
+  facet_wrap(~dob_month, ncol = 4)
+
+# facet_wrap is for 1 categorical variable facet_wrap(~variable)
+# facet_grid is for more than one variable facet_grid(vertical ~ horizontal)
+
+qplot(data = pf, x = friend_count, xlim = c(0,1000))
+
+qplot(data = pf, x = friend_count, binwidth = 25) +
+  scale_x_continuous(limits = c(0,1000), breaks = seq(0, 1000, 50)) +
+  facet_wrap(~gender)
+  #facet_grid(gender ~ .)
+```
+
+To omit N/A data
+
+```{r}
+na.omit(pf)
+```
+
+To subset non-na data
+```{r}
+subsetpf <- subset(pf, !is.na(gender))
+```
+
+To plot distribution with facet and ignoring the na values
+```{r}
+qplot(data = subsetpf, x = friend_count, binwidth = 10) + facet_grid(gender ~ .)
+  scale_x_continuous(lim = c(0:1000), breaks = seq(0, 1000, 50)) 
+```
+
+```{r}
+table(pf$gender)
+by(pf$friend_count, pf$gender, summary)
+```
+
+```{r}
+qplot(data = pf, x = tenure/365, color = I('black'), fill = I('#099DD9'), binwidth = 0.25, xlab = 'Number of years using facebook', ylab = 'Number of users in Sample') +
+  scale_x_continuous(limits = c(0,7), breaks = seq(0,7,1))
+```
+
+```{r}
+qplot(x = age, data = pf, binwidth = 1, color = I('black'), fill = I('#099DD9')) + 
+  scale_x_continuous(limits = c(10, 113), breaks = seq(10, 113, 10))
+```
+
+Transforming the data
+```{r}
+p1 = qplot(x = friend_count, data = pf)
+p2 = qplot(x = log10(friend_count + 1), data = pf)  
+p3 = qplot(x = sqrt(friend_count), data = pf) 
+grid.arrange(p1,p2,p3, ncol = 1)
+
+
+p1 <- ggplot(aes(x = friend_count), data = pf) + geom_histogram()
+p2 <- p1 + scale_x_log10()
+p3 <- p1 + scale_x_sqrt()
+grid.arrange(p1,p2,p3, ncol = 1)
+```
+
+Frequency Polygons - (density)
+```{r}
+
+#counts
+qplot(x = friend_count, data = subset(pf, !is.na(gender)), binwidth = 10, geom = 'freqpoly', color = gender)+
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0,1000,50))
+
+#propotion of the counts to see which gender has more counts
+qplot(x = friend_count, y = ..count../sum(..count..), data = subset(pf, !is.na(gender)), binwidth = 10, geom = 'freqpoly', color = gender)+
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0,1000,50))
+
+# though it seems like male have higher friend count, majority of the males of have lower friend count compared to females. In the right end tail female friend_count over take males 
+# changed the limits to take a closer view of when females over take male count
+qplot(x = friend_count, y = ..count../sum(..count..), data = subset(pf, !is.na(gender)), binwidth = 10, geom = 'freqpoly', color = gender)+
+  scale_x_continuous(limits = c(300, 1000), breaks = seq(300,1000,50))
+```
+
+Frequency Polygon - to see which gender has majority likes
+```{r}
+qplot(x = likes, data = subset(pf, !is.na(gender)))+ scale_x_continuous(limits = c(0,2500)) +
+  facet_grid(.~gender)
+
+qplot(x = likes, data = subset(pf, !is.na(gender)))+ scale_x_log10()
+
+qplot(x = likes, data = subset(pf, !is.na(gender)))+ scale_x_sqrt()
+
+# from below plot we notice that female took over male at 30
+qplot(x = www_likes, y = ..count../sum(..count..), data = subset(pf, !is.na(gender)), binwidth = 10, geom = 'freqpoly', color = gender, ylab = 'Propotion of user likes') +
+  scale_x_continuous(limits = c(10,1000), breaks = seq(10, 1000, 10))
+```
+
+Number of www_likes count for male and female
+```{r}
+by(pf$www_likes, pf$gender, sum)
+```
+
+box_plot
+```{r}
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot', ylim = c(0,1000)) 
+  
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  scale_y_continuous(limits = c(0,1000))
+
+# below plot is different from above 2 plots, the above ones will consider only the data between 0 and 1000 friend_count, where as this one considers entire data but visually represents only 0-1000 count 
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  coord_cartesian(ylim = c(0,1000))
+
+#for a closer look
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  coord_cartesian(ylim = c(0,250))
+```
+
+On an average who made more friendship requests men or women?
+```{r}
+qplot(x = gender, y = friendships_initiated, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot')
+
+qplot(x = gender, y = friendships_initiated, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  coord_cartesian(ylim = c(0, 150))
+
+by(pf$friendships_initiated, pf$gender, summary)
+```
+
+```{r}
+summary(pf$mobile_likes)
+
+summary(pf$mobile_likes > 0)
+
+pf$mobile_check_in <- NA
+
+pf$mobile_check_in <- ifelse(pf$mobile_likes > 0, 1, 0)
+
+pf$mobile_check_in <- factor(pf$mobile_check_in)
+
+summary(pf$mobile_check_in)
+
+sum(pf$mobile_check_in == 1) /
+  length(pf$mobile_check_in)
+
+```
+

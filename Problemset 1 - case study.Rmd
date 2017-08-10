@@ -1,0 +1,46 @@
+---
+title: 'Problem set 1: case study'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Install 'readxl' package to read excel files into R
+```{r}
+install.packages("readxl")
+library('readxl')
+male_data <- read_excel('indicator lung male deaths.xlsx', 1)
+male_data$gender <- 'M'
+names(male_data)[1] <- 'country'
+female_data <- read_excel('indicator lung female deaths.xlsx', 1)
+female_data$gender <- 'F'
+names(female_data)[1] <- 'country'
+
+lungdeathsData <- rbind(male_data, female_data)
+lungdeathsData$gender <- factor(lungdeathsData$gender)
+names(lungdeathsData)[2] <- 'Deaths_2002'
+
+library('ggplot2')
+qplot(x = Deaths_2002, data = lungdeathsData) +
+  facet_wrap(~gender, ncol = 1)
+
+qplot(x = gender, y = Deaths_2002, data = lungdeathsData, geom = 'boxplot') + 
+  coord_cartesian(ylim = c(0, 2300))
+
+lungdeathsData <- lungdeathsData[complete.cases(lungdeathsData[,2]),]
+
+by(lungdeathsData$Deaths_2002, lungdeathsData$gender, max)
+
+subset(lungdeathsData$country, lungdeathsData$Deaths_2002==109059)
+
+subset(lungdeathsData$country, lungdeathsData$Deaths_2002==231301)
+
+by(lungdeathsData$Deaths_2002, lungdeathsData$gender, min)
+
+subset(lungdeathsData$country, lungdeathsData$Deaths_2002==0)
+
+subset(lungdeathsData$country, lungdeathsData$Deaths_2002==1)
+```
+

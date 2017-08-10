@@ -1,0 +1,156 @@
+---
+title: "Problem set 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+ggplot(aes(x = x, y = price), data = diamonds) +
+  geom_point(alpha = 1/20)
+
+```
+correlation between price and x
+```{r}
+with(diamonds, cor.test(price, x))
+```
+correlation between price and y
+```{r}
+with(diamonds, cor.test(price, y))
+```
+correlation between price and z
+```{r}
+with(diamonds, cor.test(price, z))
+```
+scatter plot price vs depth
+```{r}
+ggplot(aes(x = depth, y = price), data = diamonds) +
+  geom_point()
+```
+
+```{r}
+ggplot(data = diamonds, aes(x = depth, y = price)) + 
+  geom_point(alpha = 1/100) + 
+  scale_x_continuous(breaks = seq(0, 80, 2))
+```
+
+correlation between price and depth
+```{r}
+with(diamonds, cor.test(price, depth))
+```
+
+scatterplot of price vs carat and omit the top 1% of price and carat values.
+```{r}
+ggplot(aes(x = carat, y = price), data = subset(diamonds, quantile(carat, 0.99) & quantile(price, 0.99))) +
+  geom_point()
+```
+
+scatterplot of price vs. volume (x * y * z)
+```{r}
+diamonds$volume <- diamonds$x * diamonds$y * diamonds$z  
+ggplot(aes(x = volume, y = price), data = diamonds) +
+  geom_point()
+
+ggplot(aes(x = volume, y = price), data = diamonds) +
+  geom_point(alpha = 1/20) +
+  xlim(0, 500)
+
+library(plyr)
+count(diamonds$volume == 0) # 20
+
+detach("package:plyr", unload=TRUE)
+```
+
+```{r}
+with(subset(diamonds, volume > 0 & volume < 800), cor.test(volume, price))
+```
+
+```{r}
+ggplot(aes(x = volume, y = price), data = subset(diamonds, volume > 0 & volume < 800)) + 
+  geom_point(alpha = 1/50) +
+  geom_smooth(method = 'lm')
+```
+
+```{r}
+library(dplyr)
+diamondsByClarity <- group_by(diamonds, clarity) %>%
+                     summarise(mean_price = mean(price),
+                               median_price = median(price),
+                               min_price = min(price),
+                               max_price = max(price),
+                               n = n())
+
+```
+
+Bar plots
+```{r}
+diamonds_by_clarity <- group_by(diamonds, clarity)
+diamonds_mp_by_clarity <- summarise(diamonds_by_clarity, mean_price = mean(price))
+
+diamonds_by_color <- group_by(diamonds, color)
+diamonds_mp_by_color <- summarise(diamonds_by_color, mean_price = mean(price))
+
+p1 <- ggplot(aes(x = factor(clarity), y = mean_price), 
+             data = diamonds_mp_by_clarity) + 
+  geom_bar(stat = 'identity')
+
+p2 <- ggplot(aes(x = factor(color), y = mean_price), 
+             data = diamonds_mp_by_color) + 
+  geom_bar(stat = 'identity')
+
+library(gridExtra)
+
+grid.arrange(p1, p2, ncol = 2)
+
+
+diamonds_by_cut <- group_by(diamonds, cut)
+diamonds_mp_by_cut <- summarise(diamonds_by_cut, mean_price = mean(price))
+ggplot(aes(x = factor(cut), y = mean_price), 
+             data = diamonds_mp_by_cut) + 
+  geom_bar(stat = 'identity')
+```
+
+```{r}
+hivdata <- read_excel('indicator hiv estimated prevalence% 15-49.xlsx', sheet = 1)
+
+names(hivdata)[1] <- 'country'
+
+transposed_hivdata <- t(hivdata)
+
+hivdataSubset <- subset(hivdata, select = -country)
+
+temp <- data_frame(t(hivdataSubset))
+typeof(temp)
+
+install.packages('reshape')
+library(reshape)
+meltedData <- melt(hivdata, id = c("country"))
+
+install.packages("tidyr")
+library(tidyr)
+
+tidyhivData <- hivdata %>% gather(year, value, 2:length(names(hivdata)), na.rm = TRUE)
+
+tidyhivData$year <- as.numeric(tidyhivData$year)
+
+data <- (tidyhivData %>% 
+  group_by(year) %>%
+  summarise(max_val = max(value)))
+
+years <- data[1]
+maxValues <- data[2]
+countryList <- list()
+for (i in seq_along(data))
+{
+  countryList[[i]] <- subset(tidyhivData$country, tidyhivData$value == maxValues[[i]]  & tidyhivData$year == years[[i]])
+ print(i)
+  #print(countryList[[i]])
+}
+```
+```{r}
+tidyhivData %>% 
+  arrange(desc(value))
+```
+

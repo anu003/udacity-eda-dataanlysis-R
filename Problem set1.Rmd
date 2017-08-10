@@ -1,0 +1,138 @@
+---
+title: 'Problem set: Explore one variables'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exploring Variables in diamonds data set
+```{r diamonds}
+data(diamonds)
+str(diamonds)
+```
+What letter represents the best color of all the diamonds
+```{r}
+levels(diamonds$color)
+```
+Histogram for diamond prices
+```{r}
+summary(diamonds$price)
+
+qplot(x = price, data = diamonds, binwidth = 100, color = I('black'), fill = I('#099DD9')) +
+  scale_x_continuous(breaks = seq(320, 19000, 500))
+```
+How many diamonds cost < $500?
+```{r}
+lessthan500 <- (diamonds$price < 500) 
+sum(lessthan500)
+```
+How many diamonds cost < $250?
+```{r}
+lessthan250 <- (diamonds$price < 250) 
+sum(lessthan250)
+```
+How many diamonds cost >= $15000?
+```{r}
+morethaneq15000 <- (diamonds$price >= 15000) 
+sum(morethaneq15000)
+```
+Exploring the largest peak in the histogram
+```{r}
+qplot(x = price, data = diamonds, xlim = c(620, 630)) 
+# there are more diamonds ranging between the price 300 - 1000 
+qplot(x = price, data = diamonds) + 
+  scale_x_continuous(lim = c(300, 20000), breaks = c(300,20000,1000))
+
+# 675-725 has highest
+qplot(x = price, data = diamonds,
+      binwidth = 50) +
+  scale_x_continuous(lim = c(300, 1000), breaks = seq(300, 1000, 25))
+
+qplot(x = price, data = diamonds,
+      binwidth = 1) +
+  scale_x_continuous(lim = c(600, 610), breaks = seq(600, 610, 1))
+```
+
+histogram of diamond prices by cut
+```{r}
+ggplot(aes(x = price), data = diamonds) +
+  geom_histogram() +
+  facet_wrap(~cut, ncol = 1)
+```
+
+which cut has the highest priced diamond?
+```{r}
+maxpriceDiamond <- max(diamonds$price)
+subset(diamonds$cut, diamonds$price == maxpriceDiamond)
+```
+which cut has the lowest priced diamond?
+```{r}
+minpriceDiamond <- min(diamonds$price)
+subset(diamonds$cut, diamonds$price == minpriceDiamond)
+```
+which cut has lowest median price?
+```{r}
+by(diamonds$price, diamonds$cut, summary)
+```
+histogram of diamond prices by cut with free scales
+```{r}
+ggplot(aes(x = price), data = diamonds) +
+  geom_histogram() +
+  facet_wrap(~cut, ncol = 1, scales = 'free')
+```
+Create a histogram of price per carat and facet it by cut
+```{r}
+diamonds$pricepercarat <- diamonds$price/diamonds$carat
+
+ggplot(aes(x = pricepercarat), 
+       data = diamonds,
+       binwidth = 10) +
+       geom_histogram() +
+       scale_x_log10() +
+       facet_wrap(~cut, ncol = 1, scales = 'free')
+```
+investigate diamond prices by color, clarity and cut
+```{r}
+#by color
+qplot(x = color, y = price, data = diamonds, geom = 'boxplot') +
+  coord_cartesian(ylim = c(300, 8000))
+
+by(diamonds$price, diamonds$color, summary)
+
+#by clarity
+qplot(x = clarity, y = price, data = diamonds, geom = 'boxplot') +
+  coord_cartesian(ylim = c(300, 6000))
+
+#median value decreases as the clarity varies except for I1
+by(diamonds$price, diamonds$clarity, summary)
+
+#by cut
+qplot(x = cut, y = price, data = diamonds, geom = 'boxplot') +
+  coord_cartesian(ylim = c(300, 6500))
+by(diamonds$price, diamonds$cut, summary)
+```
+what is the IQR for the diamonds with best color?
+```{r}
+by(diamonds$price, diamonds$color, IQR)
+```
+what is the IQR for the diamonds with worst color?
+```{r}
+by(diamonds$price, diamonds$color, IQR)
+```
+investigate diamond pricepercarat by color
+```{r}
+
+#best color medians are less than the worst color medians
+qplot(x = color, y = pricepercarat, data = diamonds, geom = 'boxplot') +
+  coord_cartesian(ylim = c(300, 6000))
+
+```
+investigate the weights of diamonds (carat) using a frequency polygon.
+```{r}
+qplot(x = carat, data = diamonds, geom = 'freqpoly', binwidth = 0.1, ylim = c(2000, 15000)) +
+  scale_x_continuous(limits = c(0, 2), breaks = seq(0.2, 1.5, 0.1))
+  #scale_y_continuous(limits = c(2000, 15000)) 
+```
+
